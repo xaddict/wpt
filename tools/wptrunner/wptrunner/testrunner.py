@@ -78,6 +78,16 @@ class TestRunner:
             self.send_message("init_succeeded")
         self.logger.debug("Executor setup done")
 
+    def set_executor(self, executor):
+        self.executor.teardown()
+        self.executor = executor
+        try:
+            self.executor.setup(self)
+        except Exception:
+            self.logger.error("Failed to setup Executor")
+        else:
+            self.logger.debug("Executor setup done")
+
     def teardown(self):
         self.executor.teardown()
         self.send_message("runner_teardown")
@@ -95,6 +105,7 @@ class TestRunner:
                                 traceback.format_exc())
             raise
         commands = {"run_test": self.run_test,
+                    "set_executor": self.set_executor,
                     "reset": self.reset,
                     "stop": self.stop,
                     "wait": self.wait}
@@ -155,7 +166,7 @@ def start_runner(runner_command_queue, runner_result_queue,
     with capture.CaptureIO(logger, capture_stdio):
         try:
             browser = executor_browser_cls(**executor_browser_kwargs)
-            executor = executor_cls(logger, browser, **executor_kwargs)
+            executor = executor_cls(browser, **executor_kwargs)
             with TestRunner(logger, runner_command_queue, runner_result_queue, executor, recording) as runner:
                 try:
                     runner.run()
@@ -558,6 +569,16 @@ class TestRunnerManager(threading.Thread):
         self.logger.debug("Test runner started")
         # Now we wait for either an init_succeeded event or an init_failed event
 
+
+    def get_executor_for_test_type(self, test_type):
+        impl = self.test_implementation_by_type[test_type]
+        executor_browser_cls, executor_browser_kwargs = self.browser.browser.executor_browser()
+        browser = executor_browser_cls(**executor_browser_kwargs)
+
+        executor_cls, executor_kwargs = impl.executor_cls, impl.executor_kwargs
+        executor = impl.executor_cls(browser, **impl.executor_kwargs)
+        return executor
+
     def init_succeeded(self):
         assert isinstance(self.state, RunnerManagerState.initializing)
         self.browser.after_init()
@@ -765,8 +786,13 @@ class TestRunnerManager(threading.Thread):
             if test is None:
                 return RunnerManagerState.stop(force_stop)
             if test_type != self.state.test_type:
-                self.logger.info(f"Restarting browser for new test type:{test_type}")
-                restart = True
+                if self.browser.needs_restart(test_type, self.state.test_type):
+                    self.logger.info(f"Restarting browser for new test type:{test_type}")
+                    restart = True
+                elif not restart:
+                    # notify test runner to update executor
+                    executor = self.get_executor_for_test_type(test_type)
+                    self.send_message("set_executor", executor)
             elif self.restart_on_new_group and test_group is not self.state.test_group:
                 self.logger.info("Restarting browser for new test group")
                 restart = True

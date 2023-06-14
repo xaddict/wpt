@@ -993,7 +993,7 @@ class MarionetteTestharnessExecutor(TestharnessExecutor):
 class MarionetteRefTestExecutor(RefTestExecutor):
     is_print = False
 
-    def __init__(self, logger, browser, server_config, timeout_multiplier=1,
+    def __init__(self, browser, server_config, timeout_multiplier=1,
                  screenshot_cache=None, close_after_done=True,
                  debug_info=None, reftest_internal=False,
                  reftest_screenshot="unexpected", ccov=False,
@@ -1001,7 +1001,6 @@ class MarionetteRefTestExecutor(RefTestExecutor):
                  browser_version=None, debug_test=False, **kwargs):
         """Marionette-based executor for reftests"""
         RefTestExecutor.__init__(self,
-                                 logger,
                                  browser,
                                  server_config,
                                  screenshot_cache=screenshot_cache,
@@ -1266,14 +1265,13 @@ class MarionetteCrashtestExecutor(CrashtestExecutor):
 class MarionettePrintRefTestExecutor(MarionetteRefTestExecutor):
     is_print = True
 
-    def __init__(self, logger, browser, server_config, timeout_multiplier=1,
+    def __init__(self, browser, server_config, timeout_multiplier=1,
                  screenshot_cache=None, close_after_done=True,
                  debug_info=None, reftest_screenshot="unexpected", ccov=False,
                  group_metadata=None, capabilities=None, debug=False,
                  reftest_internal=False, **kwargs):
         """Marionette-based executor for reftests"""
         MarionetteRefTestExecutor.__init__(self,
-                                           logger,
                                            browser,
                                            server_config,
                                            timeout_multiplier=timeout_multiplier,

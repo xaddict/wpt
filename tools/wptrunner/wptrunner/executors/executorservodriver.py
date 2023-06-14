@@ -228,12 +228,11 @@ class TimeoutError(Exception):
 
 
 class ServoWebDriverRefTestExecutor(RefTestExecutor):
-    def __init__(self, logger, browser, server_config, timeout_multiplier=1,
+    def __init__(self, browser, server_config, timeout_multiplier=1,
                  screenshot_cache=None, capabilities=None, debug_info=None,
                  **kwargs):
         """Selenium WebDriver-based executor for reftests"""
         RefTestExecutor.__init__(self,
-                                 logger,
                                  browser,
                                  server_config,
                                  screenshot_cache=screenshot_cache,

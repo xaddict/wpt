@@ -393,12 +393,11 @@ class SeleniumTestharnessExecutor(TestharnessExecutor):
 
 
 class SeleniumRefTestExecutor(RefTestExecutor):
-    def __init__(self, logger, browser, server_config, timeout_multiplier=1,
+    def __init__(self, browser, server_config, timeout_multiplier=1,
                  screenshot_cache=None, close_after_done=True,
                  debug_info=None, capabilities=None, **kwargs):
         """Selenium WebDriver-based executor for reftests"""
         RefTestExecutor.__init__(self,
-                                 logger,
                                  browser,
                                  server_config,
                                  screenshot_cache=screenshot_cache,
