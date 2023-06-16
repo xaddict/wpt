@@ -551,11 +551,12 @@ class TestRunnerManager(threading.Thread):
         assert self.command_queue is not None
         assert self.remote_queue is not None
         self.logger.info("Starting runner")
+        self.executor_implementation = self.get_executor_implementation_by_type(
+            self.state.test_type, self.state.group_metadata)
 
         args = (self.remote_queue,
                 self.command_queue,
-                self.get_executor_implementation_by_type(self.state.test_type,
-                                                         self.state.group_metadata),
+                self.executor_implementation
                 self.capture_stdio,
                 self.child_stop_flag,
                 self.recording)
@@ -636,8 +637,9 @@ class TestRunnerManager(threading.Thread):
             # Factor of 3 on the extra timeout here is based on allowing the executor
             # at least test.timeout + 2 * extra_timeout to complete,
             # which in turn is based on having several layers of timeout inside the executor
-            wait_timeout = (self.state.test.timeout * self.executor_kwargs['timeout_multiplier'] +
-                            3 * self.executor_cls.extra_timeout)
+            wait_timeout = ((self.state.test.timeout *
+                             self.executor_implementation.executor_kwargs['timeout_multiplier']) +
+                            3 * self.executor_implementation.executor_cls.extra_timeout)
             self.timer = threading.Timer(wait_timeout, self._timeout)
 
         self.send_message("run_test", self.state.test)
@@ -745,7 +747,8 @@ class TestRunnerManager(threading.Thread):
                                             test.min_assertion_count,
                                             test.max_assertion_count)
 
-        file_result.extra["test_timeout"] = test.timeout * self.executor_kwargs['timeout_multiplier']
+        file_result.extra["test_timeout"] = (test.timeout *
+                                             self.executor_implementation.executor_kwargs['timeout_multiplier'])
 
         self.logger.test_end(test.id,
                              status,
@@ -793,8 +796,8 @@ class TestRunnerManager(threading.Thread):
                     restart = True
                 elif not restart:
                     # notify test runner to update executor
-                    imp = self.get_executor_implementation_by_type(test_type, group_metadata)
-                    self.send_message("set_executor", imp)
+                    self.executor_implementation = self.get_executor_implementation_by_type(test_type, group_metadata)
+                    self.send_message("set_executor", self.executor_implementation)
             elif self.restart_on_new_group and test_group is not self.state.test_group:
                 self.logger.info("Restarting browser for new test group")
                 restart = True
