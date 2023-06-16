@@ -104,7 +104,7 @@ class ContentShellBrowser(Browser):
         self._proc = None
         self.connected = False
 
-    def needs_restart(self, new_test_type, old_test_type):
+    def restart_on_test_type_change(self, new_test_type, old_test_type):
         return False
 
     def start(self, group_metadata, **kwargs):
