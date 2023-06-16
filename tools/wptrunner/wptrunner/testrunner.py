@@ -556,7 +556,7 @@ class TestRunnerManager(threading.Thread):
 
         args = (self.remote_queue,
                 self.command_queue,
-                self.executor_implementation
+                self.executor_implementation,
                 self.capture_stdio,
                 self.child_stop_flag,
                 self.recording)
