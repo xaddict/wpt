@@ -791,7 +791,7 @@ class TestRunnerManager(threading.Thread):
             if test is None:
                 return RunnerManagerState.stop(force_stop)
             if test_type != self.state.test_type:
-                if self.browser.restart_on_test_type_change(test_type, self.state.test_type):
+                if self.browser.browser.restart_on_test_type_change(test_type, self.state.test_type):
                     self.logger.info(f"Restarting browser for new test type:{test_type}")
                     restart = True
                 elif not restart:
