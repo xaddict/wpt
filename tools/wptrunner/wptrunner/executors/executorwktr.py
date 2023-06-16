@@ -179,9 +179,9 @@ def _convert_exception(test, exception, errors):
 
 
 class WKTRRefTestExecutor(RefTestExecutor):
-    def __init__(self, logger, browser, server_config, timeout_multiplier=1, screenshot_cache=None,
+    def __init__(self, browser, server_config, timeout_multiplier=1, screenshot_cache=None,
             debug_info=None, reftest_screenshot="unexpected", **kwargs):
-        super().__init__(logger, browser, server_config, timeout_multiplier, screenshot_cache,
+        super().__init__(browser, server_config, timeout_multiplier, screenshot_cache,
                 debug_info, reftest_screenshot, **kwargs)
         self.implementation = RefTestImplementation(self)
         self.protocol = WKTRProtocol(self, browser)
