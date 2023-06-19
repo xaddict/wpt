@@ -190,9 +190,9 @@ def _convert_exception(test, exception, errors):
 
 
 class ContentShellCrashtestExecutor(CrashtestExecutor):
-    def __init__(self, logger, browser, server_config, timeout_multiplier=1, debug_info=None,
+    def __init__(self, browser, server_config, timeout_multiplier=1, debug_info=None,
             **kwargs):
-        super().__init__(logger, browser, server_config, timeout_multiplier, debug_info, **kwargs)
+        super().__init__(browser, server_config, timeout_multiplier, debug_info, **kwargs)
         self.protocol = ContentShellProtocol(self, browser)
 
     def do_test(self, test):

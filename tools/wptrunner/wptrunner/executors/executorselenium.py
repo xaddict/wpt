@@ -333,11 +333,11 @@ class SeleniumRun(TimedRunner):
 class SeleniumTestharnessExecutor(TestharnessExecutor):
     supports_testdriver = True
 
-    def __init__(self, logger, browser, server_config, timeout_multiplier=1,
+    def __init__(self, browser, server_config, timeout_multiplier=1,
                  close_after_done=True, capabilities=None, debug_info=None,
                  **kwargs):
         """Selenium-based executor for testharness.js tests"""
-        TestharnessExecutor.__init__(self, logger, browser, server_config,
+        TestharnessExecutor.__init__(self, browser, server_config,
                                      timeout_multiplier=timeout_multiplier,
                                      debug_info=debug_info)
         self.protocol = SeleniumProtocol(self, browser, capabilities)
