@@ -2,9 +2,11 @@
 // META: script=/common/get-host-info.sub.js
 // META: script=/resource-timing/resources/sizes-helper.js
 
-const baseUrl =
-  new URL('/resource-timing/resources/TAOResponse.py?tao=wildcard', location.href).href;
-const expectedSize = 4;
+const baseUrl = new URL(
+  "/common/CustomCorsResponse.py?tao=wildcard&headers=%7B%22Timing-Allow-Origin%22%3A+%22%2A%22%2C%22Access-Control-Allow-Origin%22%3A+%22%2A%22%7D",
+  location.href
+).href;
+const expectedSize = 35;
 
 const hostInfo = get_host_info();
 performance.clearResourceTimings();
@@ -27,8 +29,7 @@ const checkResourceSizes = () => {
 
 const redirectUrl = (redirectSourceOrigin, allowOrigin, targetUrl) => {
   return redirectSourceOrigin +
-    '/resource-timing/resources/redirect-cors.py?allow_origin=' +
-    encodeURIComponent(allowOrigin) +
+    '/resource-timing/resources/redirect-cors.py?allow_origin=*' +
     '&timing_allow_origin=*' +
     '&location=' + encodeURIComponent(targetUrl);
 }
