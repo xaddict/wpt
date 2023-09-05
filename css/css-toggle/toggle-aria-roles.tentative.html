@@ -372,6 +372,11 @@ for (let t of aria_role_tests) {
         if (expected_role === "null") {
           expected_role = null;
         }
+      } else if (e.hasAttribute("popover")) {
+        let value = e.getAttribute("popover");
+        if (value === "auto" || value === "hint" || value === "manual") {
+          expected_role = "group";
+        }
       }
       ++count;
       // NOTE:  This relies on Element.computedRole, which is an
