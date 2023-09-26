@@ -16,8 +16,8 @@ t.step(function() {
   var canvas = new OffscreenCanvas(100, 50);
   var ctx = canvas.getContext('2d');
 
-  var offscreenCanvas2 = new OffscreenCanvas(100, 50);
-  assert_throws_js(TypeError, function() { offscreenCanvas2.getContext("2d#"); });
+  var canvas2 = new OffscreenCanvas(100, 50);
+  assert_throws_js(TypeError, function() { canvas2.getContext("2d#"); });
   t.done();
 });
 done();

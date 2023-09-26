@@ -2,35 +2,64 @@
   desc: canvas refers back to its canvas
   code: |
     @assert ctx.canvas === canvas;
-    t.done();
 
 - name: 2d.canvas.host.readonly
-  desc: canvas is readonly
+  canvasType: ['OffscreenCanvas', 'Worker']
+  desc: offscreencanvas is readonly
   code: |
     var offscreenCanvas2 = new OffscreenCanvas(100, 50);
     var d = ctx.canvas;
     @assert offscreenCanvas2 !== d;
     ctx.canvas = offscreenCanvas2;
     @assert ctx.canvas === d;
-    t.done();
+
+- name: 2d.canvas.host.readonly
+  desc: CanvasRenderingContext2D.canvas is readonly
+  canvasType: ['HtmlCanvas']
+  code: |
+    var c = document.createElement('canvas');
+    var d = ctx.canvas;
+    @assert c !== d;
+    ctx.canvas = c;
+    @assert ctx.canvas === d;
 
 - name: 2d.canvas.context.exists
   desc: The 2D context is implemented
   code: |
-    var offscreenCanvas2 = new OffscreenCanvas(100, 50);
-    @assert offscreenCanvas2.getContext('2d') !== null;
-    t.done();
+    @assert canvas.getContext('2d') !== null;
 
 - name: 2d.canvas.context.extraargs.create
   desc: The 2D context doesn't throw with extra getContext arguments (new context)
   code: |
-    @assert (new OffscreenCanvas(100, 50)).getContext('2d', false, {}, [], 1, "2") !== null;
-    @assert (new OffscreenCanvas(100, 50)).getContext('2d', 123) !== null;
-    @assert (new OffscreenCanvas(100, 50)).getContext('2d', "test") !== null;
-    @assert (new OffscreenCanvas(100, 50)).getContext('2d', undefined) !== null;
-    @assert (new OffscreenCanvas(100, 50)).getContext('2d', null) !== null;
-    @assert (new OffscreenCanvas(100, 50)).getContext('2d', Symbol.hasInstance) !== null;
-    t.done();
+    @assert {{ new_canvas }}.getContext('2d', false, {}, [], 1, "2") !== null;
+    @assert {{ new_canvas }}.getContext('2d', 123) !== null;
+    @assert {{ new_canvas }}.getContext('2d', "test") !== null;
+    @assert {{ new_canvas }}.getContext('2d', undefined) !== null;
+    @assert {{ new_canvas }}.getContext('2d', null) !== null;
+    @assert {{ new_canvas }}.getContext('2d', Symbol.hasInstance) !== null;
+  variants: &new-canvas-definition
+    _HtmlCanvas:
+      canvasType: ['HtmlCanvas']
+      new_canvas: |-
+        document.createElement('canvas')
+    _OffscreenCanvas:
+      canvasType: ['OffscreenCanvas', 'Worker']
+      new_canvas: |-
+        new OffscreenCanvas(100, 50)
+
+- name: 2d.canvas.context.invalid.args
+  desc: Calling getContext with invalid arguments.
+  canvasType: ['HtmlCanvas']
+  code: |
+    @assert canvas.getContext('') === null;
+    @assert canvas.getContext('2d#') === null;
+    @assert canvas.getContext('This is clearly not a valid context name.') === null;
+    @assert canvas.getContext('2d\0') === null;
+    @assert canvas.getContext('2\uFF44') === null;
+    @assert canvas.getContext('2D') === null;
+    @assert throws TypeError canvas.getContext();
+    @assert canvas.getContext('null') === null;
+    @assert canvas.getContext('undefined') === null;
 
 - name: 2d.canvas.context.extraargs.cache
   desc: The 2D context doesn't throw with extra getContext arguments (cached)
@@ -41,14 +70,11 @@
     @assert canvas.getContext('2d', undefined) !== null;
     @assert canvas.getContext('2d', null) !== null;
     @assert canvas.getContext('2d', Symbol.hasInstance) !== null;
-    t.done();
 
 - name: 2d.canvas.context.unique
   desc: getContext('2d') returns the same object
   code: |
-    var offscreenCanvas2 = new OffscreenCanvas(100, 50);
-    @assert offscreenCanvas2.getContext('2d') === offscreenCanvas2.getContext('2d');
-    t.done();
+    @assert canvas.getContext('2d') === canvas.getContext('2d');
 
 - name: 2d.canvas.context.shared
   desc: getContext('2d') returns objects which share canvas state
@@ -58,62 +84,53 @@
     ctx2.fillStyle = '#0f0';
     ctx.fillRect(0, 0, 100, 50);
     @assert pixel 50,25 == 0,255,0,255;
-    t.done();
 
 - name: 2d.canvas.context.emptystring
   desc: getContext with empty string returns null
+  canvasType: ['OffscreenCanvas', 'Worker']
   code: |
-    var offscreenCanvas2 = new OffscreenCanvas(100, 50);
-    @assert throws TypeError offscreenCanvas2.getContext("");
-    t.done();
+    var canvas2 = new OffscreenCanvas(100, 50);
+    @assert throws TypeError canvas2.getContext("");
 
 - name: 2d.canvas.context.unrecognised.badname
   desc: getContext with unrecognised context name returns null
+  canvasType: ['OffscreenCanvas', 'Worker']
   code: |
-    var offscreenCanvas2 = new OffscreenCanvas(100, 50);
-    @assert throws TypeError offscreenCanvas2.getContext('This is not an implemented context in any real browser');
-    t.done();
+    var canvas2 = new OffscreenCanvas(100, 50);
+    @assert throws TypeError canvas2.getContext('This is not an implemented context in any real browser');
 
 - name: 2d.canvas.context.unrecognised.badsuffix
   desc: Context name "2d" plus a suffix is unrecognised
+  canvasType: ['OffscreenCanvas', 'Worker']
   code: |
-    var offscreenCanvas2 = new OffscreenCanvas(100, 50);
-    @assert throws TypeError offscreenCanvas2.getContext("2d#");
-    t.done();
+    var canvas2 = new OffscreenCanvas(100, 50);
+    @assert throws TypeError canvas2.getContext("2d#");
 
 - name: 2d.canvas.context.unrecognised.nullsuffix
   desc: Context name "2d" plus a "\0" suffix is unrecognised
+  canvasType: ['OffscreenCanvas', 'Worker']
   code: |
-    var offscreenCanvas2 = new OffscreenCanvas(100, 50);
-    @assert throws TypeError offscreenCanvas2.getContext("2d\0");
-    t.done();
+    var canvas2 = new OffscreenCanvas(100, 50);
+    @assert throws TypeError canvas2.getContext("2d\0");
 
 - name: 2d.canvas.context.unrecognised.unicode
   desc: Context name which kind of looks like "2d" is unrecognised
+  canvasType: ['OffscreenCanvas', 'Worker']
   code: |
-    var offscreenCanvas2 = new OffscreenCanvas(100, 50);
-    @assert throws TypeError offscreenCanvas2.getContext("2\uFF44");
-    t.done();
+    var canvas2 = new OffscreenCanvas(100, 50);
+    @assert throws TypeError canvas2.getContext("2\uFF44");
 
 - name: 2d.canvas.context.casesensitive
   desc: Context name "2D" is unrecognised; matching is case sensitive
+  canvasType: ['OffscreenCanvas', 'Worker']
   code: |
-    var offscreenCanvas2 = new OffscreenCanvas(100, 50);
-    @assert throws TypeError offscreenCanvas2.getContext('2D');
-    t.done();
-
-- name: 2d.canvas.context.arguments.missing
-  code: |
-    var offscreenCanvas2 = new OffscreenCanvas(100, 50);
-    @assert throws TypeError offscreenCanvas2.getContext(); @moz-todo
-    t.done();
-
+    var canvas2 = new OffscreenCanvas(100, 50);
+    @assert throws TypeError canvas.getContext("2D");
 
 - name: 2d.canvas.host.initial.color
   desc: Initial state is transparent black
   code: |
     @assert pixel 20,20 == 0,0,0,0;
-    t.done();
 
 - name: 2d.canvas.host.initial.reset.different
   desc: Changing size resets canvas to transparent black
@@ -123,7 +140,6 @@
     @assert pixel 20,20 == 255,0,0,255;
     canvas.width = 50;
     @assert pixel 20,20 == 0,0,0,0;
-    t.done();
 
 - name: 2d.canvas.host.initial.reset.same
   desc: Setting size (not changing the value) resets canvas to transparent black
@@ -134,7 +150,7 @@
     @assert pixel 20,20 == 255,0,0,255;
     canvas.width = 100;
     @assert pixel 20,20 == 0,0,0,0;
-    t.done();
+
 
 - name: 2d.canvas.host.initial.reset.path
   desc: Resetting the canvas state resets the current path
@@ -145,7 +161,6 @@
     ctx.fillStyle = '#f00';
     ctx.fill();
     @assert pixel 20,20 == 0,0,0,0;
-    t.done();
 
 - name: 2d.canvas.host.initial.reset.clip
   desc: Resetting the canvas state resets the current clip region
@@ -157,7 +172,6 @@
     ctx.fillStyle = '#0f0';
     ctx.fillRect(0, 0, 100, 50);
     @assert pixel 20,20 == 0,255,0,255;
-    t.done();
 
 - name: 2d.canvas.host.initial.reset.transform
   desc: Resetting the canvas state resets the current transformation matrix
@@ -168,7 +182,6 @@
     ctx.fillStyle = '#0f0';
     ctx.fillRect(0, 0, 100, 50);
     @assert pixel 20,20 == 0,255,0,255;
-    t.done();
 
 - name: 2d.canvas.host.initial.reset.gradient
   desc: Resetting the canvas state does not invalidate any existing gradients
@@ -183,7 +196,6 @@
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 100, 50);
     @assert pixel 50,25 == 0,255,0,255;
-    t.done();
 
 - name: 2d.canvas.host.initial.reset.pattern
   desc: Resetting the canvas state does not invalidate any existing patterns
@@ -198,7 +210,6 @@
     ctx.fillStyle = p;
     ctx.fillRect(0, 0, 100, 50);
     @assert pixel 50,25 == 0,255,0,255;
-    t.done();
 
 - name: 2d.canvas.host.size.attributes.idl.set.zero
   desc: Setting width/height IDL attributes to 0
@@ -207,10 +218,10 @@
     canvas.height = 0;
     @assert canvas.width === 0;
     @assert canvas.height === 0;
-    t.done();
 
 - name: 2d.canvas.host.size.attributes.idl
   desc: Getting/setting width/height IDL attributes
+  canvasType: ['OffscreenCanvas', 'Worker']
   webidl:
   - es-unsigned-long
   code: |
@@ -230,14 +241,12 @@
     @assert throws TypeError canvas.height = "foo";
     @assert canvas.width === 301;
     @assert canvas.height === 301;
-    t.done();
 
 - name: 2d.canvas.host.size.attributes.default
   desc: Default width/height when attributes are missing
   code: |
     @assert canvas.width === 100;
     @assert canvas.height === 50;
-    t.done();
 
 - name: 2d.canvas.host.size.attributes.reflect.setidl
   desc: Setting IDL attributes updates IDL and content attributes
@@ -246,7 +255,6 @@
     canvas.height = 60;
     @assert canvas.width === 120;
     @assert canvas.height === 60;
-    t.done();
 
 - name: 2d.canvas.host.size.attributes.reflect.setidlzero
   desc: Setting IDL attributes to 0 updates IDL and content attributes
@@ -255,7 +263,6 @@
     canvas.height = 0;
     @assert canvas.width === 0;
     @assert canvas.height === 0;
-    t.done();
 
 - name: 2d.canvas.host.size.large
   notes: Not sure how reasonable this is, but the spec doesn't say there's an upper
@@ -266,4 +273,85 @@
     canvas.height = n;
     @assert canvas.width === n;
     @assert canvas.height === n;
-    t.done();
+
+- name: 2d.canvas.context.prototype
+  desc: checks CanvasRenderingContext2D prototype
+  canvasType: ['HtmlCanvas']
+  code: |
+    @assert Object.getPrototypeOf(CanvasRenderingContext2D.prototype) === Object.prototype;
+    @assert Object.getPrototypeOf(ctx) === CanvasRenderingContext2D.prototype;
+
+- name: 2d.canvas.host.scaled
+  desc: CSS-scaled canvases get drawn correctly
+  canvasType: ['HtmlCanvas']
+  size: [50, 25]
+  canvas: 'style="width: 100px; height: 50px"'
+  manual:
+  code: |
+    ctx.fillStyle = '#00f';
+    ctx.fillRect(0, 0, 50, 25);
+    ctx.fillStyle = '#0ff';
+    ctx.fillRect(0, 0, 25, 10);
+  expected: |
+    size 100 50
+    cr.set_source_rgb(0, 0, 1)
+    cr.rectangle(0, 0, 100, 50)
+    cr.fill()
+    cr.set_source_rgb(0, 1, 1)
+    cr.rectangle(0, 0, 50, 20)
+    cr.fill()
+
+- name: 2d.canvas.context.type.exists
+  desc: The 2D context interface is a property of 'window'
+  canvasType: ['HtmlCanvas', 'OffscreenCanvas']
+  notes: &bindings Defined in "Web IDL" (draft)
+  code: |
+    @assert window.CanvasRenderingContext2D;
+
+- name: 2d.canvas.context.type.extend
+  desc: Interface methods can be added
+  canvasType: ['HtmlCanvas']
+  notes: *bindings
+  code: |
+    window.CanvasRenderingContext2D.prototype.fillRectGreen = function (x, y, w, h)
+    {
+        this.fillStyle = '#0f0';
+        this.fillRect(x, y, w, h);
+    };
+    ctx.fillStyle = '#f00';
+    ctx.fillRectGreen(0, 0, 100, 50);
+    @assert pixel 50,25 == 0,255,0,255;
+  expected: green
+
+- name: 2d.canvas.context.type.replace
+  desc: Interface methods can be overridden
+  canvasType: ['HtmlCanvas']
+  notes: *bindings
+  code: |
+    var fillRect = window.CanvasRenderingContext2D.prototype.fillRect;
+    window.CanvasRenderingContext2D.prototype.fillRect = function (x, y, w, h)
+    {
+        this.fillStyle = '#0f0';
+        fillRect.call(this, x, y, w, h);
+    };
+    ctx.fillStyle = '#f00';
+    ctx.fillRect(0, 0, 100, 50);
+    @assert pixel 50,25 == 0,255,0,255;
+  expected: green
+
+- name: 2d.canvas.context.type.prototype
+  desc: window.CanvasRenderingContext2D.prototype are not [[Writable]] and not [[Configurable]],
+    and its methods are [[Configurable]].
+  canvasType: ['HtmlCanvas']
+  notes: *bindings
+  code: |
+    @assert window.CanvasRenderingContext2D.prototype;
+    @assert window.CanvasRenderingContext2D.prototype.fill;
+    window.CanvasRenderingContext2D.prototype = null;
+    @assert window.CanvasRenderingContext2D.prototype;
+    delete window.CanvasRenderingContext2D.prototype;
+    @assert window.CanvasRenderingContext2D.prototype;
+    window.CanvasRenderingContext2D.prototype.fill = 1;
+    @assert window.CanvasRenderingContext2D.prototype.fill === 1;
+    delete window.CanvasRenderingContext2D.prototype.fill;
+    @assert window.CanvasRenderingContext2D.prototype.fill === undefined;
