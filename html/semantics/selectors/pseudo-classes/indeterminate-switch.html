@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Selector: pseudo-class (:indeterminate) switch attribute</title>
+<link rel="help" href="https://html.spec.whatwg.org/multipage/#pseudo-classes">
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<style>
+  input { display:block }
+  input:indeterminate { display:none }
+</style>
+<input id="input" type=checkbox switch>
+<script>
+  test(() => {
+    input.indeterminate = true;
+    assert_equals(getComputedStyle(input).display, "block",
+      "Should not match :indeterminate for type=checkbox with switch attribute on first load");
+
+    input.removeAttribute("switch");
+    assert_equals(getComputedStyle(input).display, "none",
+      "Should match :indeterminate for type=checkbox after removing switch attribute");
+
+    input.setAttribute("switch","");
+    assert_equals(getComputedStyle(input).display, "block",
+      "Should not match :indeterminate for type=checkbox after adding switch attribute");
+  }, "Evaluation of :indeterminate changes for checkboxes based on the switch attribute");
+</script>
