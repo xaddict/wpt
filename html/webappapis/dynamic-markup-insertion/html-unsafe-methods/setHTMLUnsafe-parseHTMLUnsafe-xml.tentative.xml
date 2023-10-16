@@ -1,0 +1,5 @@
+<!DOCTYPE html>
+<html>
+<xhtml:script xmlns:xhtml="http://www.w3.org/1999/xhtml" src="/resources/testharness.js" type="application/javascript"/>
+<xhtml:script xmlns:xhtml="http://www.w3.org/1999/xhtml" src="/resources/testharnessreport.js" type="application/javascript"/>
+<xhtml:script xmlns:xhtml="http://www.w3.org/1999/xhtml" src="setHTMLUnsafe-parseHTMLUnsafe-xml.js" type="application/javascript"/>
