@@ -24,6 +24,12 @@ async function waitForPointercancelEvent(test, target, timeoutMs = 500) {
   return waitForEvent("pointercancel", test, target, timeoutMs);
 }
 
+async function waitForSnapchangedEvent(target) {
+  return new Promise(resolve => {
+    target.addEventListener("snapchanged", resolve);
+  });
+}
+
 // Resets the scroll position to (0,0).  If a scroll is required, then the
 // promise is not resolved until the scrollend event is received.
 async function waitForScrollReset(test, scroller, timeoutMs = 500) {

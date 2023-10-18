@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title> CSS Scroll Snap 2 Test: snapchanged events</title>
+  <link rel="help" href="https://drafts.csswg.org/css-scroll-snap-2/#snap-events">
+  <script src="/resources/testharness.js"></script>
+  <script src="/resources/testharnessreport.js"></script>
+  <script src="resources/snapchanged-testcommon.js"></script>
+  <script src="/dom/events/scrolling/scroll_support.js"></script>
+</head>
+
+<body onload="runTests()">
+  <style>
+    body {
+      margin: 0px;
+    }
+
+    div {
+      position: absolute;
+      margin: 0px;
+    }
+
+    #spacer {
+      width: 2000px;
+      height: 2000px;
+    }
+
+    .scroller {
+      height: 400px;
+      width: 400px;
+      overflow: scroll;
+      scroll-snap-type: both mandatory;
+    }
+
+    .snap_point {
+      width: 300px;
+      height: 300px;
+      scroll-snap-align: start;
+    }
+
+    #snap_point_1 {
+      left: 0px;
+      top: 0px;
+      background-color: red;
+    }
+
+    #snap_point_2 {
+      top: 300px;
+      left: 300px;
+      background-color: orange;
+    }
+
+    #snap_point_3 {
+      left: 600px;
+      top: 600px;
+      background-color: blue;
+    }
+  </style>
+  <div id="scroller" class="scroller">
+    <div id="spacer"></div>
+    <div id="snap_point_1" class="snap_point"></div>
+    <div id="snap_point_2" class="snap_point"></div>
+    <div id="snap_point_3" class="snap_point"></div>
+  </div>
+  <script>
+  function runTests () {
+    let scroller = document.getElementById("scroller");
+    let offset_to_snap_point_2 = {
+      x: snap_point_1.getBoundingClientRect().width + 10,
+      y: snap_point_1.getBoundingClientRect().height + 10
+    };
+
+    promise_test(async (t) => {
+      await waitForCompositorCommit();
+      const test_data = {
+        scroller: scroller,
+        scrolling_function: () => {
+            scroller.scrollTo(offset_to_snap_point_2.x,
+                offset_to_snap_point_2.y);
+        },
+        expected_snap_targets: new Set([snap_point_2.id]),
+        expected_scroll_offsets: {
+          x: snap_point_1.offsetWidth,
+          y: snap_point_1.offsetHeight,
+        }
+      };
+      await test_snapchanged(t, test_data);
+    }, "snapchanged event fires after snap target changes via scrollTo");
+
+    promise_test(async (t) => {
+      await waitForCompositorCommit();
+      const test_data = {
+        scroller: scroller,
+        scrolling_function: () => {
+            scroller.scrollBy(offset_to_snap_point_2.x - scroller.scrollLeft,
+                offset_to_snap_point_2.y - scroller.scrollTop);
+        },
+        expected_snap_targets: new Set([snap_point_2.id]),
+        expected_scroll_offsets: {
+          x: snap_point_1.offsetWidth,
+          y: snap_point_1.offsetHeight,
+        }
+      };
+      await test_snapchanged(t, test_data);
+    }, "snapchanged event fires after snap target changes via scrollBy");
+
+    promise_test(async (t) => {
+      await waitForCompositorCommit();
+      const test_data = {
+        scroller: scroller,
+        scrolling_function: () => {
+         scroller.scrollLeft = offset_to_snap_point_2.x;
+        },
+        expected_snap_targets: new Set([snap_point_1.id, snap_point_2.id]),
+        expected_scroll_offsets: {
+          x: snap_point_1.offsetWidth,
+          y: 0,
+        }
+      };
+      await test_snapchanged(t, test_data);
+    }, "snapchanged event fires after snap target changes via setting " +
+       "scrollLeft.");
+
+    promise_test(async (t) => {
+      await waitForCompositorCommit();
+      const test_data = {
+        scroller: scroller,
+        scrolling_function: () => {
+         scroller.scrollTop = offset_to_snap_point_2.y;
+        },
+        expected_snap_targets: new Set([snap_point_1.id, snap_point_2.id]),
+        expected_scroll_offsets: {
+          x: 0,
+          y: snap_point_1.offsetHeight,
+        }
+      };
+      await test_snapchanged(t, test_data);
+    }, "snapchanged event fires after snap target changes via setting " +
+       "scrollTop.");
+
+    promise_test(async (t) => {
+      await waitForCompositorCommit();
+      const test_data = {
+        scroller: scroller,
+        scrolling_function: () => {
+            scroller.scroll(offset_to_snap_point_2.x, offset_to_snap_point_2.y);
+        },
+        expected_snap_targets: new Set([snap_point_2.id]),
+        expected_scroll_offsets: {
+          x: snap_point_2.offsetWidth,
+          y: snap_point_2.offsetHeight,
+        }
+      };
+      await test_snapchanged(t, test_data);
+    }, "snapchanged event fires after snap target changes via Element.scroll");
+
+    let snap_targets_seen = [];
+    function push_snap_target(evt) {
+      for (let target of evt.snapTargets) {
+        snap_targets_seen.push(target.id);
+      }
+    }
+
+    promise_test(async (t) => {
+      await resetScroller(scroller);
+      await waitForCompositorCommit();
+      assert_equals(scroller.scrollTop, 0,
+        "scroller is initially not scrolled vertically");
+      assert_equals(scroller.scrollLeft, 0,
+        "scroller is initially not scrolled horizontally");
+
+      // Set the scroll destination to just a little off (0, 0) so we snap
+      // back to the top box.
+      let scroll_top_target = 10;
+      let scroll_left_target = 10;
+
+      let snapchanged_promise = new Promise((resolve) => {
+        scroller.addEventListener("snapchanged", (evt) => {
+          push_snap_target(evt);
+          resolve();
+        });
+      });
+      t.add_cleanup(() => {
+        scroller.removeEventListener("snapchanged", push_snap_target);
+      });
+      // This scroll should snap back to snap_point_1, so snapchanged should not
+      // be fired.
+      scroller.scrollTo(scroll_left_target, scroll_top_target);
+
+      assert_equals(scroller.scrollTop, 0,
+      "scroller snaps back to the top");
+      assert_equals(scroller.scrollLeft, 0,
+      "scroller snaps back to the left");
+
+      scroll_top_target =  snap_point_1.getBoundingClientRect().height + 10;
+      scroll_left_target = snap_point_1.getBoundingClientRect().width + 10;
+      // This scroll should snap to snap_point_2, so snapchanged should be
+      // fired.
+      scroller.scrollTo(scroll_left_target, scroll_top_target);
+
+      assert_equals(scroller.scrollTop,
+        snap_point_1.getBoundingClientRect().height,
+        "scroller snaps to the top of snap_point_2");
+      assert_equals(scroller.scrollLeft,
+        snap_point_1.getBoundingClientRect().width,
+        "scroller snaps to the left of snap_point_2");
+
+      // We should see a snapchanged event fire to snap_point_2, we can then
+      // verify that no snapchanged event was targeted at snap_point_1.
+      await snapchanged_promise;
+
+      assert_equals(snap_targets_seen.length, 1, "snapchanged fired once");
+      assert_equals(snap_targets_seen[0], snap_point_2.id,
+        "snapchanged only fired on snap to snap_point_2.");
+    }, "snapchanged is not fired if snap target doesn't change on " +
+       "programmatic scroll");
+  }
+  </script>
+</body>
+</html>
