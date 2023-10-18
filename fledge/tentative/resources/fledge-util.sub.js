@@ -16,7 +16,7 @@ const TRUSTED_BIDDING_SIGNALS_URL =
 const TRUSTED_SCORING_SIGNALS_URL =
     `${BASE_URL}resources/trusted-scoring-signals.py`;
 
-// Other origins that should all be distint from the main frame origin
+// Other origins that should all be distinct from the main frame origin
 // that the tests start with.
 const OTHER_ORIGIN1 = 'https://{{hosts[alt][]}}:{{ports[https][0]}}';
 const OTHER_ORIGIN2 = 'https://{{hosts[alt][]}}:{{ports[https][1]}}';
@@ -64,6 +64,11 @@ function createBidderBeaconURL(uuid, id = '1', origin = window.location.origin) 
 }
 function createSellerBeaconURL(uuid, id = '1', origin = window.location.origin) {
   return createTrackerURL(origin, uuid, `track_post`, `seller_beacon_${id}`);
+}
+
+function createDirectFromSellerSignalsURL(origin = window.location.origin) {
+  let url = new URL(`${origin}${BASE_PATH}resources/direct-from-seller-signals.py`);
+  return url.toString();
 }
 
 // Generates a UUID and registers a cleanup method with the test fixture to
@@ -345,10 +350,13 @@ async function joinGroupAndRunBasicFledgeTestExpectingNoWinner(test, testConfig 
 // `renderURLOverride` allows the ad URL of the joined InterestGroup to
 // to be set by the caller.
 //
+// `directFromSellerSignalsHeaderAdSlot` is an optional parameter to pass in
+// `adSlot` name for header-based `directFromSellerSignals` tests.
+//
 // Requesting error report URLs causes waitForObservedRequests() to throw
 // rather than hang.
 async function runReportTest(test, uuid, codeToInsert, expectedReportURLs,
-                             renderURLOverride) {
+    renderURLOverride, directFromSellerSignalsHeaderAdSlot) {
   let scoreAd = codeToInsert.scoreAd;
   let reportResultSuccessCondition = codeToInsert.reportResultSuccessCondition;
   let reportResult = codeToInsert.reportResult;
@@ -398,9 +406,13 @@ async function runReportTest(test, uuid, codeToInsert, expectedReportURLs,
     interestGroupOverrides.ads = [{ renderURL: renderURLOverride }]
 
   await joinInterestGroup(test, uuid, interestGroupOverrides);
-  await runBasicFledgeAuctionAndNavigate(
-      test, uuid,
-      { decisionLogicURL: createDecisionScriptURL(uuid, decisionScriptURLParams) });
+
+  let auctionConfigOverrides =
+      { decisionLogicURL: createDecisionScriptURL(uuid, decisionScriptURLParams) };
+  if (directFromSellerSignalsHeaderAdSlot)
+    auctionConfigOverrides.directFromSellerSignalsHeaderAdSlot = directFromSellerSignalsHeaderAdSlot
+
+  await runBasicFledgeAuctionAndNavigate(test, uuid, auctionConfigOverrides);
   await waitForObservedRequests(uuid, expectedReportURLs);
 }
 
