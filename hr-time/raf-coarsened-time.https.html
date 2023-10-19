@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+</head>
+<body>
+<script>
+    /* Coarsen to 5 microseconds or coarser */
+    const COARSE_RESOLUTION = 200;
+
+    promise_test(async t => {
+        for (let i = 0; i < 32; ++i) {
+            const timestamp = await new Promise(resolve => requestAnimationFrame(ts => resolve(ts)));
+            assert_approx_equals(timestamp * COARSE_RESOLUTION, Math.round(timestamp * COARSE_RESOLUTION), 0.1);
+            assert_approx_equals(document.timeline.currentTime * COARSE_RESOLUTION, Math.round(document.timeline.currentTime * COARSE_RESOLUTION), 0.1);
+        }
+    });
+</script>
+</body>
+</html>
