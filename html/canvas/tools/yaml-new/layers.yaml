@@ -681,12 +681,14 @@
     ctx.beginLayer({filter: []}); ctx.endLayer();
     ctx.beginLayer({filter: {}}); ctx.endLayer();
     ctx.beginLayer({filter: {name: "unknown"}}); ctx.endLayer();
+    ctx.beginLayer({filter: ''}); ctx.endLayer();
 
-    @assert throws TypeError ctx.beginLayer({filter: ''});
-    @assert throws TypeError ctx.beginLayer({filter: 0});
-    @assert throws TypeError ctx.beginLayer({filter: 1});
-    @assert throws TypeError ctx.beginLayer({filter: true});
-    @assert throws TypeError ctx.beginLayer({filter: false});
+    // These cases don't throw TypeError since they can be casted to a
+    // DOMString.
+    ctx.beginLayer({filter: 0}); ctx.endLayer();
+    ctx.beginLayer({filter: 1}); ctx.endLayer();
+    ctx.beginLayer({filter: true}); ctx.endLayer();
+    ctx.beginLayer({filter: false}); ctx.endLayer();
 
 - name: 2d.layer.blur-from-outside-canvas
   desc: Checks blur leaking inside from drawing outside the canvas
@@ -787,3 +789,82 @@
         const clipRegion = new Path2D();
         clipRegion.rect(20, 20, 160, 160);
         ctx.clip(clipRegion);
+
+- name: 2d.layer.css-filters
+  desc: Checks that beginLayer works with a CSS filter string as input.
+  size: [200, 200]
+  code: |
+    ctx.beginLayer({filter: 'drop-shadow(-10px -10px 5px purple)'});
+
+    ctx.fillStyle = 'teal';
+    ctx.fillRect(25, 25, 50, 50);
+
+    ctx.endLayer();
+
+    ctx.beginLayer({filter: 'blur(10px)'});
+
+    ctx.fillStyle = 'violet';
+    ctx.fillRect(125, 25, 50, 50);
+
+    ctx.endLayer();
+
+    ctx.beginLayer({filter: 'blur(5px) drop-shadow(10px 10px 5px orange)'});
+
+    ctx.fillStyle = 'navy';
+    ctx.fillRect(50, 125, 100, 50);
+
+    ctx.endLayer();
+  reference: |
+    const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg"
+          width="{{ size[0] }}" height="{{ size[1] }}"
+          color-interpolation-filters="sRGB">
+      <filter id="filter_1" x="-100%" y="-100%" width="300%" height="300%">
+        <feDropShadow dx="-10" dy="-10" stdDeviation="5" flood-color="purple" />
+      </filter>
+      <filter id="filter_2" x="-100%" y="-100%" width="300%" height="300%">
+        <feGaussianBlur stdDeviation="10" />
+      </filter>
+      <filter id="filter_3" x="-100%" y="-100%" width="300%" height="300%">
+        <feGaussianBlur stdDeviation="5" />
+        <feDropShadow dx="10" dy="10" stdDeviation="5" flood-color="orange" />
+      </filter>
+      <g filter="url(#filter_1)">
+        <rect x="25" y="25" width="50" height="50" fill="teal"/>
+      </g>
+      <g filter="url(#filter_2)">
+        <rect x="125" y="25" width="50" height="50" fill="violet"/>
+      </g>
+      <g filter="url(#filter_3)">
+        <rect x="50" y="125" width="100" height="50" fill="navy"/>
+      </g>
+    </svg>`;
+
+    const img = new Image();
+    img.width = {{ size[0] }};
+    img.height = {{ size[1] }};
+    img.onload = () => {
+        ctx.drawImage(img, 0, 0);
+    };
+    img.src = 'data:image/svg+xml;base64,' + btoa(svg);
+
+- name: 2d.layer.nested-filters
+  desc: Checks that nested layers work properly when both apply filters.
+  size: [200, 200]
+  code: |
+    ctx.beginLayer({filter: {name: 'dropShadow', dx: -20, dy: -20, stdDeviation: 0, floodColor: 'yellow'}});
+    ctx.beginLayer({filter: 'drop-shadow(-10px -10px 0 blue)'});
+
+    ctx.fillStyle = 'red';
+    ctx.fillRect(50, 50, 100, 100);
+
+    ctx.endLayer();
+    ctx.endLayer();
+  reference: |
+    ctx.fillStyle = 'yellow';
+    ctx.fillRect(20, 20, 100, 100);
+    ctx.fillRect(30, 30, 100, 100);
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(40, 40, 100, 100);
+    ctx.fillStyle = 'red';
+    ctx.fillRect(50, 50, 100, 100);
