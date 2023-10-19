@@ -61,3 +61,8 @@ class Network(BidiModule):
     def remove_intercept(self, intercept: str) -> Mapping[str, Any]:
         params: MutableMapping[str, Any] = {"intercept": intercept}
         return params
+
+    @command
+    def fail_request(self, request: str) -> Mapping[str, Any]:
+        params: MutableMapping[str, Any] = {"request": request}
+        return params
