@@ -43,6 +43,12 @@
 
   <script>
     // Load arbitrary stylesheet with inline script
+    document.write('<link rel="stylesheet" href="../resources/empty_style.css?inline-script-doc-write">');
+
+    // Load arbitrary image with inline script
+    document.write('<img src="/images/blue.png?inline-script-doc-write">');
+
+    // Load arbitrary stylesheet with inline script
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "../resources/empty_style.css?inline-script";
@@ -55,23 +61,34 @@
 
     // Testing Initiator of all the resources loaded
     promise_test(async (t) => {
-      const expectedInitiator = await getDocumentResourceID();
-      const resources = [
+      const DocumentResourceID = await getDocumentResourceID();
+      const parser_attributed_resources = [
         "empty.js?blocking",
         "empty.js?preload",
         "empty.js?async",
-        "empty.js?deferred",
         "empty.js?module",
+        "empty.js?deferred",
         "empty_style.css?link",
         "blue.png?inline-style",
         "Ahem.ttf",
         "blue.png?using-Img-tag",
-        "green.html",
-        "empty_style.css?inline-script",
-        "blue.png?inline-script",
+        // The following Cases are yet not covered by Parser Preloading and
+        // thus, will be dealt in subsequent CLs.
+        // "green.html",
+        // "empty_style.css?inline-script",
+        // "blue.png?inline-script",
       ];
-      for (const resource of resources) {
-        await testResourceInitiator(resource, expectedInitiator);
+      for (const resource of parser_attributed_resources) {
+        await testResourceInitiator(resource, DocumentResourceID);
+      }
+      const not_parser_attributed_resources = [
+        // The following cases should not be attributed to document as they were added by doc.write so currently we should report unkoown intiator( value =0).
+        "empty_style.css?inline-script-doc-write",
+        "blue.png?inline-script-doc-write",
+      ];
+      const unknownInitiator = 0;
+      for (const resource of not_parser_attributed_resources) {
+        await testResourceInitiator(resource, unknownInitiator);
       }
     }, "Ensure initiator Attribute matches with Document ResourceID");
   </script>
