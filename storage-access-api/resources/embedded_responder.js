@@ -20,6 +20,22 @@ window.addEventListener("message", async (event) => {
       reply(obtainedAccess);
     }
       break;
+    case "requestExtendedStorageAccess": {
+        const obtainedAccess = await document.requestStorageAccess({all: true})
+          .then(
+            (handle) => {
+              if (handle) {
+                handle.sessionStorage.clear();
+                handle.localStorage.clear();
+                return true;
+              } else {
+                return false;
+              }
+            },
+            () => false);
+        reply(obtainedAccess);
+      }
+        break;
     case "write document.cookie":
       document.cookie = event.data.cookie;
       reply(undefined);

@@ -221,6 +221,12 @@ function RequestStorageAccessInFrame(frame) {
       { command: "requestStorageAccess" }, frame.contentWindow);
 }
 
+// Executes document.requestStorageAccess in the given frame.
+function RequestExtendedStorageAccessInFrame(frame) {
+  return PostMessageAndAwaitReply(
+      { command: "requestExtendedStorageAccess" }, frame.contentWindow);
+}
+
 // Executes test_driver.set_permission in the given frame, with the provided
 // arguments.
 function SetPermissionInFrame(frame, args = []) {

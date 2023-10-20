@@ -35,6 +35,7 @@
     assert_false(await HasUnpartitionedCookie(frame2), "frame2 should not have cookie access.");
 
     assert_true(await RequestStorageAccessInFrame(frame1), "requestStorageAccess doesn't require a gesture since the permission has already been granted.");
+    assert_true(await RequestExtendedStorageAccessInFrame(frame1), "requestExtendedStorageAccess doesn't require a gesture since the permission has already been granted.");
 
     assert_true(await FrameHasStorageAccess(frame1), "frame1 should have storage access now.");
     assert_true(await HasUnpartitionedCookie(frame1), "frame1 should now have cookie access.");
@@ -43,6 +44,7 @@
     assert_false(await HasUnpartitionedCookie(frame2), "frame2 should still have cookie access.");
 
     assert_true(await RequestStorageAccessInFrame(frame2), "frame2 should be able to get storage access without a gesture.");
+    assert_true(await RequestExtendedStorageAccessInFrame(frame2), "frame2 should be able to get extended storage access without a gesture.");
 
     assert_true(await FrameHasStorageAccess(frame2), "frame2 should have storage access after it requested it.");
     assert_true(await HasUnpartitionedCookie(frame2), "frame2 should have cookie access after getting storage access.");

@@ -22,6 +22,11 @@ promise_test(t => {
     "document.requestStorageAccess() call without user gesture");
 }, "[" + testPrefix + "] document.requestStorageAccess() should be rejected in insecure context");
 
+promise_test(t => {
+  return promise_rejects_dom(t, "NotAllowedError", document.requestStorageAccess({all: true}),
+    "document.requestStorageAccess({all: true}) call without user gesture");
+}, "[" + testPrefix + "] document.requestStorageAccess({all: true}) should be rejected in insecure context");
+
 // Logic to load test cases within combinations of iFrames.
 if (topLevelDocument) {
   // This specific test will run only as a top level test (not as a worker).
@@ -38,9 +43,24 @@ if (topLevelDocument) {
   }, "[non-fully-active] document.requestStorageAccess() should reject when run in a detached frame");
 
   promise_test(t => {
+    const description = "document.requestStorageAccess({all: true}) call in a detached frame";
+    // Can't use `promise_rejects_dom` here, since the error comes from the wrong global.
+    return CreateDetachedFrame().requestStorageAccess({all: true})
+      .then(t.unreached_func("Should have rejected: " + description), (e) => {
+        assert_equals(e.name, 'InvalidStateError', description);
+        t.done();
+      });
+  }, "[non-fully-active] document.requestStorageAccess({all: true}) should reject when run in a detached frame");
+
+  promise_test(t => {
     return promise_rejects_dom(t, 'InvalidStateError', CreateDocumentViaDOMParser().requestStorageAccess(),
      "document.requestStorageAccess() in a detached DOMParser result");
   }, "[non-fully-active] document.requestStorageAccess() should reject when run in a detached DOMParser document");
+
+  promise_test(t => {
+    return promise_rejects_dom(t, 'InvalidStateError', CreateDocumentViaDOMParser().requestStorageAccess({all: true}),
+     "document.requestStorageAccess({all: true}) in a detached DOMParser result");
+  }, "[non-fully-active] document.requestStorageAccess({all: true}) should reject when run in a detached DOMParser document");
 
   // Create a test with a single-child same-origin iframe.
   const sameOriginFramePromise = RunTestsInIFrame(
@@ -79,4 +99,14 @@ if (topLevelDocument) {
   },
   '[' + testPrefix +
       '] document.requestStorageAccess() should be rejected when called with a user gesture in insecure context');
+
+  promise_test(async t => {
+    await Promise .all(testsWithoutUserActivation);
+    await RunCallbackWithGesture(() => {
+      return promise_rejects_dom(t, "NotAllowedError", document.requestStorageAccess({all: true}),
+      "should reject in insecure context");
+    });
+  },
+  '[' + testPrefix +
+      '] document.requestStorageAccess({all: true}) should be rejected when called with a user gesture in insecure context');
 }

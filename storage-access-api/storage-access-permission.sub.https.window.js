@@ -105,4 +105,26 @@
     assert_equals(event.target.name, "storage-access");
     assert_equals(event.target.state, "granted");
   }, "Permission state can be observed");
+
+  promise_test(async t => {
+    t.add_cleanup(async () => {
+      await test_driver.set_permission({ name: 'storage-access' }, 'prompt');
+    });
+
+    const permission = await navigator.permissions.query({name: "storage-access"});
+
+    const p = new Promise(resolve => {
+      permission.addEventListener("change", (event) => resolve(event), { once: true });
+    });
+
+    await test_driver.set_permission({ name: 'storage-access' }, 'granted');
+    let handle = await document.requestStorageAccess({all: true});
+    handle.sessionStorage.clear();
+    handle.localStorage.clear();
+
+    const event = await p;
+
+    assert_equals(event.target.name, "storage-access");
+    assert_equals(event.target.state, "granted");
+  }, "Extended permission state can be observed");
 })();

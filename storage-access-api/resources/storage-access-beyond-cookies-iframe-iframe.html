@@ -1,0 +1,34 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="/resources/testdriver.js"></script>
+<script src="/resources/testdriver-vendor.js"></script>
+<script>
+(async function() {
+  let message = "HasAccess";
+  try {
+    // Step 6 (storage-access-api/storage-access-beyond-cookies.sub.https.html)
+    await test_driver.set_permission({ name: 'storage-access' }, 'granted');
+    let handle = await document.requestStorageAccess({all: true});
+    const id = (new URLSearchParams(window.location.search)).get("id");
+    if (id != handle.sessionStorage.getItem("test")) {
+      message = "No first-party Session Storage access";
+    }
+    if (id != handle.localStorage.getItem("test")) {
+      message = "No first-party Local Storage access";
+    }
+    if (null != window.sessionStorage.getItem("test")) {
+      message = "Handle should not override window Session Storage";
+    }
+    if (null != window.localStorage.getItem("test")) {
+      message = "Handle should not override window Local Storage";
+    }
+    handle.sessionStorage.clear();
+    handle.localStorage.clear();
+  } catch (_) {
+    message = "Unable to load handle in same-origin context";
+  }
+  // Step 7 (storage-access-api/storage-access-beyond-cookies.sub.https.html)
+  await test_driver.set_permission({ name: 'storage-access' }, 'prompt');
+  window.top.postMessage(message, "*");
+})();
+</script>

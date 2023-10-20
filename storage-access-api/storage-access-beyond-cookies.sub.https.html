@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+<title>Storage Access API: Verify StorageAccessAPIBeyondCookies can bypass partitioning</title>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="/resources/testdriver.js"></script>
+<script src="/resources/testdriver-vendor.js"></script>
+<body>
+<script>
+// Here's the set-up for this test:
+// Step 1 (top-frame) Set up listener for "HasAccess" message.
+// Step 2 (top-frame) Add data to first-party storage.
+// Step 3 (top-frame) Embed an iframe that's cross-origin with top-frame.
+// Step 4 (sub-frame) Try to use storage access API and read first-party data.
+// Step 5 (sub-frame) Embed an iframe that's same-origin with top-frame.
+// Step 6 (sub-sub-frame) Try to use storage access API and read first-party data.
+// Step 7 (sub-sub-frame) Send "HasAccess" message to top-frame.
+// Step 8 (top-frame) Recieve "HasAccess" message and cleanup.
+
+async_test(t => {
+  // Step 1
+  window.addEventListener("message", t.step_func(e => {
+    // Step 8
+    assert_equals(e.data, "HasAccess", "Storage Access API should be accessable and return first-party data");
+    t.done();
+  }));
+
+  // Step 2
+  const id = +new Date() + "-" + Math.random();
+  sessionStorage.setItem("test", id);
+  localStorage.setItem("test", id);
+
+  // Step 3
+  let iframe = document.createElement("iframe");
+  iframe.src = "https://{{hosts[alt][]}}:{{ports[https][0]}}/storage-access-api/resources/storage-access-beyond-cookies-iframe.sub.html?id="+id;
+  document.body.appendChild(iframe);
+}, "Verify StorageAccessAPIBeyondCookies can bypass partitioning");
+</script>
+</body>

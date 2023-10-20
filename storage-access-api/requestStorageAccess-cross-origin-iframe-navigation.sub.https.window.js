@@ -27,6 +27,7 @@
     assert_false(await HasUnpartitionedCookie(frame), "frame initially does not have access to cookies.");
 
     assert_true(await RequestStorageAccessInFrame(frame), "requestStorageAccess resolves without requiring a gesture.");
+    assert_true(await RequestExtendedStorageAccessInFrame(frame), "requestExtendedStorageAccess resolves without requiring a gesture.");
 
     assert_true(await FrameHasStorageAccess(frame), "frame has storage access after request.");
     assert_true(await HasUnpartitionedCookie(frame), "frame has access to cookies after request.");
