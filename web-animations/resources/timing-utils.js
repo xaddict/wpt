@@ -37,3 +37,15 @@ function assert_default_timing_except(effect, propertiesToSkip) {
     );
   }
 }
+
+function waitForAnimationTime(animation, time) {
+  return new Promise((resolve) => {
+    function raf() {
+      if (animation.currentTime < time) {
+        requestAnimationFrame(raf);
+      }
+      resolve();
+    }
+    requestAnimationFrame(raf);
+  });
+}
