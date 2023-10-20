@@ -66,3 +66,17 @@ class Network(BidiModule):
     def fail_request(self, request: str) -> Mapping[str, Any]:
         params: MutableMapping[str, Any] = {"request": request}
         return params
+
+    @command
+    def continue_request(self, request: str, method: Optional[str] = None, url: Optional[str] = None) -> Mapping[str, Any]:
+        params: MutableMapping[str, Any] = {
+            "request": request,
+        }
+
+        if method is not None:
+            params["method"] = method
+
+        if url is not None:
+            params["url"] = url
+
+        return params
